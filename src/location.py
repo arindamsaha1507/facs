@@ -39,23 +39,48 @@ class LocationType(Enum):
     def __repr__(self):
         """String representation of LocationType"""
         return self.name.title()
-    
+
+
+@dataclass
+class LatLon:
+    """Class to represent a longitude and latitude"""
+
+    lat: float
+    lon: float
+
+    def __post_init__(self):
+        if self.lon < -180 or self.lon > 180:
+            raise InvalidLocation("Longitude must be between -180 and 180")
+        if self.lat < -90 or self.lat > 90:
+            raise InvalidLocation("Latitude must be between -90 and 90")
+
+    def __repr__(self):
+        """String representation of LonLat"""
+
+        if self.lon < 0:
+            lon = f"{- self.lon} W"
+        else:
+            lon = f"{self.lon} E"
+
+        if self.lat < 0:
+            lat = f"{- self.lat} S"
+        else:
+            lat = f"{self.lat} N"
+
+        return f"({lat}, {lon})"
+
+
 @dataclass
 class Location:
     """Class to represent a location"""
 
     index: int
-    lon: float
-    lat: float
+    coords: LatLon
     size: int
 
     def __post_init__(self):
         """Post init method to set default values"""
 
-        if self.lon < -180 or self.lon > 180:
-            raise InvalidLocation("Longitude must be between -180 and 180")
-        if self.lat < -90 or self.lat > 90:
-            raise InvalidLocation("Latitude must be between -90 and 90")
         if self.size < 0:
             raise InvalidLocation("Size must be greater or equal to 0")
 
@@ -99,7 +124,7 @@ class LocationFactory:
     @staticmethod
     def create_house(index: int, lon: float, lat: float) -> House:
         """Create a house"""
-        return House(index, lon, lat)
+        return House(index, LatLon(lat, lon))
 
     @staticmethod
     def bulk_create_houses(data: pd.DataFrame) -> list[House]:
@@ -136,7 +161,7 @@ class LocationFactory:
         index: int, lon: float, lat: float, size: int, location_type: LocationType
     ) -> Amenity:
         """Create an amenity"""
-        return Amenity(index, lon, lat, size, location_type)
+        return Amenity(index, LatLon(lat, lon), size, location_type)
 
     @staticmethod
     def create_all_buildings(filename: str) -> dict[LocationType, list[Location]]:
@@ -162,7 +187,7 @@ class LocationFactory:
 
 
 if __name__ == "__main__":
-    print(House(1, 2, 3))
-    print(Amenity(2, 3, 4, 5, LocationType.HOSPITAL))
+    print(House(1, LatLon(2, 3)))
+    print(Amenity(2, LatLon(4, 5), 5, LocationType.HOSPITAL))
     print(LocationFactory.create_all_buildings(path.buildings_file))
     # print(LocationType.HOUSE.name)
