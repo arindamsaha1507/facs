@@ -130,6 +130,22 @@ class Neighbour:
         """String representation of Neighbour"""
 
         return f"Neighbour({self.house.index}, {self.amenity.index}, {self.distance}, {self.score})"
+    
+
+@dataclass
+class Neighbourhood:
+    """Class to represent a neighbourhood"""
+
+    house: House
+    neighbours: dict[LocationType,list[Neighbour]]
+
+    def __post_init__(self):
+        """Post init method to set default values"""
+
+        for location_type in self.neighbours:
+            for neighbour in self.neighbours[location_type]:
+                if neighbour.house != self.house:
+                    raise InvalidLocation("House and neighbours must be in the same location")
 
 
 @dataclass
