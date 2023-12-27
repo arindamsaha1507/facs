@@ -10,9 +10,11 @@ import pandas as pd
 
 from src.constants import path
 from src.exceptions import InvalidLocation
+from src.neighbourhood import NeighbourhoodFactory
 
 if TYPE_CHECKING:
     from src.person import Person
+    from src.neighbourhood import Neighbourhood
 
 
 class LocationType(Enum):
@@ -83,7 +85,14 @@ class House(Location):
     location_type: LocationType = field(default=LocationType.HOUSE, init=False)
     size: int = field(default=0, init=False)
 
+    neighbourhood: Neighbourhood = field(init=False, repr=False)
+
     agents: list[Person] = field(default_factory=list, init=False, repr=False)
+
+    def add_neighbourhood(self, neighbourhood: Neighbourhood):
+        """Add a neighbourhood to a house"""
+
+        self.neighbourhood = neighbourhood
 
 
 @dataclass
@@ -176,9 +185,55 @@ class LocationFactory:
 
         return buildings
 
+    @staticmethod
+    def create_neighbourhoods(
+        houses: list[House],
+        amenities: dict[LocationType, list[Amenity]],
+        number_of_neighbours: dict[LocationType, int],
+    ) -> list[Neighbourhood]:
+        """Create neighbourhoods for all houses"""
 
-if __name__ == "__main__":
+        neighbourhoods = []
+
+        for house in houses:
+            print(f"Creating neighbourhood for house {house.index}", end="\r")
+            house.add_neighbourhood(
+                NeighbourhoodFactory.create_neighbourhood(
+                    house, amenities, number_of_neighbours
+                )
+            )
+
+        return neighbourhoods
+
+
+def main():
+    """Main function"""
+
     print(House(1, LatLon(2, 3)))
     print(Amenity(2, LatLon(4, 5), 5, LocationType.HOSPITAL))
-    print(LocationFactory.create_all_buildings(path.buildings_file))
-    # print(LocationType.HOUSE.name)
+    all_buildings = LocationFactory.create_all_buildings(path.buildings_file)
+
+    all_houses = all_buildings[LocationType.HOUSE]
+
+    all_amenities = {
+        key: value for key, value in all_buildings.items() if key != LocationType.HOUSE
+    }
+
+    print(f"Number of houses: {len(all_houses)}")
+    print(f"Number of amenities: {len(all_amenities)}")
+
+    numbers = {
+        LocationType.OFFICE: 5,
+        LocationType.SCHOOL: 5,
+        LocationType.HOSPITAL: 5,
+        LocationType.LEISURE: 5,
+        LocationType.SHOPPING: 5,
+        LocationType.SUPERMARKET: 5,
+        LocationType.PARK: 5,
+    }
+
+    LocationFactory.create_neighbourhoods(all_houses, all_amenities, numbers)
+
+
+if __name__ == "__main__":
+    main()

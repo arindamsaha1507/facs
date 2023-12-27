@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from src.utils import haversine_distance
-from src.location import House, Amenity, LocationType
-from src.exceptions import InvalidLocation
+
+if TYPE_CHECKING:
+    from src.location import House, Amenity, LocationType
 
 
 @dataclass
@@ -62,12 +64,47 @@ class Neighbourhood:
     house: House
     neighbours: dict[LocationType, list[Neighbour]]
 
-    def __post_init__(self):
-        """Post init method to set default values"""
 
-        for location_type in self.neighbours:
-            for neighbour in self.neighbours[location_type]:
-                if neighbour.house != self.house:
-                    raise InvalidLocation(
-                        "House and neighbours must be in the same location"
-                    )
+class NeighbourhoodFactory:
+    """Class to create a neighbourhood"""
+
+    @staticmethod
+    def create_neighbours_of_location_type(
+        house: House,
+        amenities: list[Amenity],
+        location_type: LocationType,
+        number_of_neighbours: int,
+    ) -> list[Neighbour]:
+        """Create neighbours of a specific location type"""
+
+        amenities_of_location_type = [
+            amenity for amenity in amenities if amenity.location_type == location_type
+        ]
+
+        neighbours = [
+            Neighbour(house, amenity) for amenity in amenities_of_location_type
+        ]
+
+        neighbours.sort(reverse=True)
+
+        if number_of_neighbours < 0:
+            return neighbours
+
+        return neighbours[:number_of_neighbours]
+
+    @staticmethod
+    def create_neighbourhood(
+        house: House,
+        amenities: dict[LocationType, list[Amenity]],
+        number_of_neighbours: dict[LocationType, int],
+    ) -> Neighbourhood:
+        """Create a neighbourhood"""
+
+        neighbours = [
+            NeighbourhoodFactory.create_neighbours_of_location_type(
+                house, amenities[key], key, value
+            )
+            for key, value in number_of_neighbours.items()
+        ]
+
+        return Neighbourhood(house, neighbours)

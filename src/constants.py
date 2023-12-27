@@ -24,4 +24,5 @@ class Path:
             if attr.endswith("_file"):
                 setattr(self, attr, f"{self.data_dir}/{getattr(self, attr)}")
 
+
 path = Path()
