@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import multiprocessing
+
 from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
 from enum import Enum
@@ -190,20 +192,25 @@ class LocationFactory:
         houses: list[House],
         amenities: dict[LocationType, list[Amenity]],
         number_of_neighbours: dict[LocationType, int],
-    ) -> list[Neighbourhood]:
+    ) -> None:
         """Create neighbourhoods for all houses"""
 
-        neighbourhoods = []
-
-        for house in houses:
-            print(f"Creating neighbourhood for house {house.index}", end="\r")
-            house.add_neighbourhood(
-                NeighbourhoodFactory.create_neighbourhood(
-                    house, amenities, number_of_neighbours
-                )
+        with multiprocessing.Pool() as pool:
+            neighbourhoods = pool.starmap(
+                NeighbourhoodFactory.create_neighbourhood,
+                [(house, amenities, number_of_neighbours) for house in houses],
             )
 
-        return neighbourhoods
+        for house, neighbourhood in zip(houses, neighbourhoods):
+            house.add_neighbourhood(neighbourhood)
+
+        # for house in houses:
+        #     # print(f"Creating neighbourhood for house {house.index}", end="\r")
+        #     house.add_neighbourhood(
+        #         NeighbourhoodFactory.create_neighbourhood(
+        #             house, amenities, number_of_neighbours
+        #         )
+        #     )
 
 
 def main():
@@ -233,6 +240,10 @@ def main():
     }
 
     LocationFactory.create_neighbourhoods(all_houses, all_amenities, numbers)
+
+    print(all_houses[0].neighbourhood)
+    print()
+    print(all_houses[10].neighbourhood)
 
 
 if __name__ == "__main__":

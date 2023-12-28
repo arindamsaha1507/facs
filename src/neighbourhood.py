@@ -54,7 +54,7 @@ class Neighbour:
     def __repr__(self):
         """String representation of Neighbour"""
 
-        return f"Neighbour({self.house.index}, {self.amenity.index}, {self.distance}, {self.score})"
+        return f"Neighbour({self.house.index}, {self.amenity.index}, {self.amenity.location_type}, {self.distance}, {self.score})"
 
 
 @dataclass
